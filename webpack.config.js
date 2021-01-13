@@ -11,10 +11,25 @@ module.exports = (env) => {
             main: './src/main.js',
         },
         devtool: isDev ? 'inline-source-map' : false,
+        module: {
+            rules: [
+                {
+                    test: /\.(png|jpe?g|gif)$/,
+                    use: [
+                        {
+                            loader: 'file-loader',
+                            options: {
+                                esModule: false,
+                            },
+                        },
+                    ],
+                },
+            ],
+        },
         plugins: [
             new CleanWebpackPlugin(),
             new HtmlWebpackPlugin({
-                title: 'Placeholder title',
+                template: 'src/index.html',
                 scriptLoading: 'defer',
                 hash: true,
             }),
@@ -27,6 +42,7 @@ module.exports = (env) => {
         output: {
             filename: '[name].[contenthash].js',
             path: path.resolve(__dirname, 'dist'),
+            publicPath: '/',
         },
     };
 };
