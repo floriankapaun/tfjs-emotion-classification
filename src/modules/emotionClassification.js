@@ -53,11 +53,18 @@ const getFaces = async (img) => {
 const getFaceImage = async (img, position) => {
     // Get image dimensions [height, width]
     const imgDimensions = img.shape.slice(1, 3);
+    // The current face position is rectangular but might not be square.
+    // In order to prevent stretching we'll increase the size to be square.
+    let topLeft = [position.topLeft[1], position.topLeft[0]];
+    let bottomRight = [position.bottomRight[1], position.bottomRight[0]];
+    const width = bottomRight[1] - topLeft[1];
+    const height = bottomRight[0] - topLeft[0]
+    const difference = width - height;
+    topLeft[0] -= (difference / 2);
+    bottomRight[0] += (difference / 2);
     // Normalize topLeft and bottomRight position
-    const topLeft = [position.topLeft[1], position.topLeft[0]];
-    const bottomRight = [position.bottomRight[1], position.bottomRight[0]];
-    const normalizedTopLeft = tf.div(topLeft, imgDimensions);
-    const normalizedBottomRight = tf.div(bottomRight, imgDimensions);
+    const normalizedTopLeft = tf.div(topLeft, imgDimensions).dataSync();
+    const normalizedBottomRight = tf.div(bottomRight, imgDimensions).dataSync();
     // Configure box to crop by
     const box = tf.concat([normalizedTopLeft, normalizedBottomRight]).expandDims(0);
     // Crop image to face only (box) and resize to correct dimensions for classifier

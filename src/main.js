@@ -20,7 +20,8 @@ const plot = async (img) => {
     // Print classification results
     ctx.lineWidth = '3';
     ctx.strokeStyle = '#00ff00';
-    // ctx.font = '30px Arial';
+    ctx.fillStyle = '#00ff00';
+    ctx.font = '14px Arial';
     for (let i = 0; i < result.facePositions.length; i++) {
         const scale = canvas.width / result.img.width;
         const start = result.facePositions[i].topLeft;
@@ -33,11 +34,12 @@ const plot = async (img) => {
         // Render a rectangle for each detected face.
         ctx.strokeRect(start[0], start[1], size[0], size[1]);
         // Print mood
-        ctx.fillText(result.emotions[i], start[0], start[1]);
+        ctx.fillText(result.emotions[i], start[0], start[1] - 5);
         const faceCanvas = document.createElement('CANVAS');
         const faceCtx = faceCanvas.getContext('2d');
         faceCanvas.width = 48;
         faceCanvas.height = 48;
+        faceCanvas.classList.add('face');
         let imgData = faceCtx.createImageData(faceCanvas.width, faceCanvas.height);
         for (let j = 0; j < result.faceImages[i].length; j++) {
             imgData.data[j] = result.faceImages[i][j];

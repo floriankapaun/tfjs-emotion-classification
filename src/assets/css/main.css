@@ -6,7 +6,11 @@ body {
 }
 
 canvas {
-    display: block;
-    margin-bottom: 1rem;
+    margin: 1rem;
     border: 1px solid;
+}
+
+.face {
+    width: 100%;
+    max-width: 200px;
 }
