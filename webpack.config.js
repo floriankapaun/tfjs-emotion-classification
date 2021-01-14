@@ -24,6 +24,32 @@ module.exports = (env) => {
                         },
                     ],
                 },
+                {
+                    test: /\.json$/,
+                    type: 'javascript/auto',
+                    use: [
+                        {
+                            loader: 'file-loader',
+                            options: {
+                                publicPath: '/',
+                            }
+                        },
+                    ],
+                },
+                {
+                    test: /(group).*(-shard).*$/,
+                    type: 'javascript/auto',
+                    use: [
+                        {
+                            loader: 'file-loader',
+                            options: {
+                                publicPath: '/',
+                                outputPath: 'static',
+                                name: '[name].[ext]',
+                            }
+                        },
+                    ],
+                },
             ],
         },
         plugins: [
