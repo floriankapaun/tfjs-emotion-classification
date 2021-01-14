@@ -73,7 +73,7 @@ const plotClassificationResults = (img, facePositions, emotions) => {
 const displayFaceImageWithAnnotations = (imgData, emotion) => {
     // Create wrapper to deploy content into
     const wrapper = document.createElement('DIV');
-    wrapper.classList.add('face-image');
+    wrapper.classList.add('face-image__wrapper');
     // Create canvas and context to plot image into
     const canvas = document.createElement('CANVAS');
     canvas.width = 48;
