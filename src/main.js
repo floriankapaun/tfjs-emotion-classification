@@ -1,6 +1,7 @@
 import { getEmotions } from './modules/emotionClassification.js';
 import defaultImgUrl from './assets/img/group.jpg';
 
+
 const CANVAS = document.getElementById('imgCanvas');
 const CTX = CANVAS.getContext('2d');
 const IMG_UPLOAD_ELEMENT = document.getElementById('imgUpload');
@@ -36,11 +37,11 @@ const plotImg = (img) => {
  */
 const plotClassificationResults = (img, facePositions, emotions) => {
     // Set plot styles
-    const textOffestBottom = 5;
+    const textOffsetLeft = -10;
+    const textOffsetTop = 7;
     CTX.lineWidth = '3';
     CTX.strokeStyle = '#00ff00';
-    CTX.fillStyle = '#00ff00';
-    CTX.font = '16px Arial';
+    CTX.font = '20px Arial';
     // Plot each facePosition and the according emotions label
     for (let i = 0; i < facePositions.length; i++) {
         let { topLeft, bottomRight } = facePositions[i];
@@ -56,7 +57,7 @@ const plotClassificationResults = (img, facePositions, emotions) => {
         // Render a rectangle for each detected face.
         CTX.strokeRect(topLeft[0], topLeft[1], rectSize[0], rectSize[1]);
         // Print detected emotion on top of rectangle.
-        CTX.fillText(emotions[i], topLeft[0], topLeft[1] - textOffestBottom);
+        CTX.fillText(emotions[i].emoji, topLeft[0] + textOffsetLeft, topLeft[1] + textOffsetTop);
     }
 };
 
@@ -89,7 +90,7 @@ const displayFaceImageWithAnnotations = (imgData, emotion) => {
     wrapper.appendChild(canvas);
     // Create label
     const label = document.createElement('P');
-    label.innerHTML = emotion;
+    label.innerHTML = `${emotion.emoji} ${emotion.label}`;
     // Add label to canvas
     wrapper.appendChild(label);
     // Append wrapper element to DOM

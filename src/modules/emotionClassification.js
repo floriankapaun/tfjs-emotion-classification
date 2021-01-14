@@ -28,18 +28,27 @@ import shard17 from '../assets/model/group17-shard1of1';
 import shard18 from '../assets/model/group18-shard1of1';
 import shard19 from '../assets/model/group19-shard1of1';
 
+
 const TF_BACKEND = 'cpu';
 const CLASSIFIER_IMG_DIMENSIONS = [48, 48];
 const EMOTION = {
-    0: 'angry',
-    1: 'disgust',
-    2: 'fear',
-    3: 'happy',
-    4: 'sad',
-    5: 'surprise',
-    6: 'neutral',
+    0: { label: 'angry', emoji: '😠' },
+    1: { label: 'disgust', emoji: '🤢' },
+    2: { label: 'fear', emoji: '😨' },
+    3: { label: 'happy', emoji: '🙂' },
+    4: { label: 'sad', emoji: '🙁' },
+    5: { label: 'surprise', emoji: '😯' },
+    6: { label: 'neutral', emoji: '😐' },
 };
 
+
+/**
+ * Detects faces using tfjs blazeface model and returns them.
+ * 
+ * @param {HTMLElement} img 
+ * 
+ * @returns {Array}
+ */
 const getFaces = async (img) => {
     // Load blazeface for face detection
     const model = await blazeface.load();
@@ -50,6 +59,15 @@ const getFaces = async (img) => {
     return model.estimateFaces(img, returnTensors, flipHorizontal, annotateBoxes);
 };
 
+
+/**
+ * Crops face out of full image and prepares the result for classification.
+ * 
+ * @param {Tensor} img 
+ * @param {Object} position - face position
+ * 
+ * @returns {Tensor} - prepared face img
+ */
 const getFaceImage = async (img, position) => {
     // Get image dimensions [height, width]
     const imgDimensions = img.shape.slice(1, 3);
@@ -81,39 +99,53 @@ const getFaceImage = async (img, position) => {
         .expandDims(3);
 };
 
-export const getEmotion = async (img) => {
+
+/**
+ * Classifies the emotion of a face
+ * 
+ * @param {Tensor} img - face only; size 48x48; grayscale;
+ * 
+ * @returns {Object} - emotion containing 'label' and 'emoji'
+ */
+const classifyEmotion = async (img) => {
     const model = await loadLayersModel(emotionClassificationModelUrl);
     const predictions = await model.predict(img).data();
     const indexOfMaxValue = predictions.reduce((iMax, x, i, arr) => x > arr[iMax] ? i : iMax, 0);
     return EMOTION[indexOfMaxValue];
 };
 
+
+/**
+ * Detects faces in an image, crops them out and classifies their emotions.
+ * 
+ * @param {HTMLElement} img 
+ * 
+ * @returns {Object} - including 'facePositions', 'faceImages' and 'emotions'
+ */
 export const getEmotions = async (img) => {
     // Setup tensorflow backend
     await tf.setBackend(TF_BACKEND);
-    // Convert img to tensor and reshape to [1, height, width, 3]
-    let imgTensor = tf.browser.fromPixels(img).expandDims(0);
     // Find faces and their positions in img
     const facePositions = await getFaces(img);
     if (facePositions.length === 0) return false;
-    // Get cropped face images ready for classification
+    // Convert img to tensor and reshape to [1, height, width, 3]
+    const imgTensor = tf.browser.fromPixels(img).expandDims(0);
+    // Get cropped face images – ready for classification
     const faceImages = await Promise.all(
         facePositions.map((position) => getFaceImage(imgTensor, position))
     );
     if (faceImages.length === 0) return false;
-    // Encode face images for display
-    const encodedFaceImages = [];
-    for (const img of faceImages) {
-        const preparedImg = tf.abs(img.reshape([...CLASSIFIER_IMG_DIMENSIONS, 1]));
-        encodedFaceImages.push(await tf.browser.toPixels(preparedImg));
-    }
     // Classify each face image
     const emotions = await Promise.all(
-        faceImages.map((img) => getEmotion(img))
+        faceImages.map((img) => classifyEmotion(img))
     );
-
+    // Encode extracted face images for return
+    const encodedFaceImages = [];
+    for (const img of faceImages) {
+        const reshapedImg = img.reshape([...CLASSIFIER_IMG_DIMENSIONS, 1]);
+        encodedFaceImages.push(await tf.browser.toPixels(reshapedImg));
+    }
     return {
-        img,
         facePositions,
         faceImages: encodedFaceImages,
         emotions,
