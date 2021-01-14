@@ -2,6 +2,10 @@
 
 Image emotion classification based on [Tensorflow.js](https://www.tensorflow.org/js) and [Webpack](https://webpack.js.org/).
 
+![A group of girls with rectangles around their faces and annotations about their emotion](./docs/demo.jpg)
+
+Check out the [demo](https://floriankapaun.github.io/tfjs-emotion-classification/) and upload your own picture.
+
 ## Setup
 
 I'm using yarn for my examples, but you could easily use npm as well.

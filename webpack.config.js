@@ -31,7 +31,7 @@ module.exports = (env) => {
                         {
                             loader: 'file-loader',
                             options: {
-                                publicPath: '/',
+                                publicPath: '',
                             }
                         },
                     ],
@@ -43,8 +43,8 @@ module.exports = (env) => {
                         {
                             loader: 'file-loader',
                             options: {
-                                publicPath: '/',
-                                outputPath: 'static',
+                                publicPath: '',
+                                outputPath: isDev ? 'tfjs-emotion-classification/static' : 'static',
                                 name: '[name].[ext]',
                             }
                         },
@@ -68,7 +68,7 @@ module.exports = (env) => {
         output: {
             filename: '[name].[contenthash].js',
             path: path.resolve(__dirname, 'dist'),
-            publicPath: '/',
+            publicPath: '',
         },
     };
 };
