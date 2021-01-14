@@ -9,7 +9,7 @@ body {
 
 main {
     width: 100%;
-    max-width: 900px;
+    max-width: 800px;
     margin-left: auto;
     margin-right: auto;
     margin-top: 2rem;
@@ -31,6 +31,16 @@ input {
     font-family: inherit;
     font-size: inherit;
 }
+
+#log {
+    display: none;
+    padding: 1rem;
+    background-color: #000;
+    color: #fff;
+    margin-bottom: 1rem;
+}
+
+#log.visible { display: block; }
 
 #controls {
     margin-top: 1rem;

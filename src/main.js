@@ -6,6 +6,22 @@ const CANVAS = document.getElementById('imgCanvas');
 const CTX = CANVAS.getContext('2d');
 const IMG_UPLOAD_ELEMENT = document.getElementById('imgUpload');
 const FACES_SECTION = document.getElementById('faces');
+const LOG = document.getElementById('log');
+
+
+/**
+ * Print a message into the DOM
+ * 
+ * @param {String} msg 
+ */
+const setMessage = (msg) => {
+    if (msg) {
+        LOG.innerHTML = msg;
+        LOG.classList.add('visible');
+    } else {
+        LOG.classList.remove('visible');
+    }
+};
 
 
 /**
@@ -109,12 +125,24 @@ const processImg = async (img) => {
     plotImg(img)
     // Classify the given img
     const { facePositions, faceImages, emotions } = await getEmotions(img);
+    if (!facePositions) {
+        setMessage('⚠️ Couldn\'t detect any faces.');
+        return false;
+    } else if (!faceImages) {
+        setMessage('⚠️ Couldn\'t extract face images.');
+        return false;
+    } else if (!emotions) {
+        setMessage('⚠️ Couldn\'t classify emotions.');
+        return false;
+    }
     // Plot classification results on top of image background
     plotClassificationResults(img, facePositions, emotions);
     // Display each detected face as own image with classification annotations
     for (let i = 0; i < faceImages.length; i++) {
         displayFaceImageWithAnnotations(faceImages[i], emotions[i]);
     }
+    // Show that the process finished
+    setMessage('');
 };
 
 
@@ -124,6 +152,10 @@ const processImg = async (img) => {
  * @param {String} src - image src
  */
 const runPipeline = (src) => {
+    // Reset
+    FACES_SECTION.innerHTML = '';
+    // Show that the process is loading
+    setMessage('Loading...');
     // Create a new image from src
     const imgObj = new Image();
     imgObj.src = src;
