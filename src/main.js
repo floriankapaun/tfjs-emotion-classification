@@ -1,77 +1,152 @@
 import { getEmotions } from './modules/emotionClassification.js';
 import defaultImgUrl from './assets/img/group.jpg';
 
-const canvas = document.getElementById('imgCanvas');
-const ctx = canvas.getContext('2d');
-const imgUploadElement = document.getElementById('imgUpload');
-const facesSection = document.getElementById('faces');
+const CANVAS = document.getElementById('imgCanvas');
+const CTX = CANVAS.getContext('2d');
+const IMG_UPLOAD_ELEMENT = document.getElementById('imgUpload');
+const FACES_SECTION = document.getElementById('faces');
 
-const plot = async (img) => {
-    // Make the img as wide as the canvas width "auto" height
-    const scale = canvas.width / img.width;
-    // Resize canvas to new img height
-    canvas.height = img.height * scale;
+
+/**
+ * Plot the given Image Object to the canvas.
+ * 
+ * @param {HTMLElement} img
+ */
+const plotImg = (img) => {
+    if (img instanceof HTMLElement === false) {
+        throw Error('The handed over img is no HTMLElement');
+    }
+    // Calculate the factor to scale the image to the same width as the canvas.
+    const scale = CANVAS.width / img.width;
+    // Set canvas height to scaled img height
+    CANVAS.height = img.height * scale;
     // Clear the canvas
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    CTX.clearRect(0, 0, CANVAS.width, CANVAS.height);
     // Draw the scaled image onto the canvas
-    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-    // Classify the given img
-    const result = await getEmotions(img);
-    // Print classification results
-    ctx.lineWidth = '3';
-    ctx.strokeStyle = '#00ff00';
-    ctx.fillStyle = '#00ff00';
-    ctx.font = '14px Arial';
-    for (let i = 0; i < result.facePositions.length; i++) {
-        const scale = canvas.width / result.img.width;
-        const start = result.facePositions[i].topLeft;
-        const end = result.facePositions[i].bottomRight;
-        start[0] *= scale;
-        start[1] *= scale;
-        end[0] *= scale;
-        end[1] *= scale;
-        const size = [end[0] - start[0], end[1] - start[1]];
+    CTX.drawImage(img, 0, 0, CANVAS.width, CANVAS.height);
+};
+
+
+/**
+ * Plots a rectangle with emotion annotation onto the main canvas
+ * 
+ * @param {HTMLElement} img
+ * @param {Object} facePositions
+ * @param {Array} emotions
+ */
+const plotClassificationResults = (img, facePositions, emotions) => {
+    // Set plot styles
+    const textOffestBottom = 5;
+    CTX.lineWidth = '3';
+    CTX.strokeStyle = '#00ff00';
+    CTX.fillStyle = '#00ff00';
+    CTX.font = '16px Arial';
+    // Plot each facePosition and the according emotions label
+    for (let i = 0; i < facePositions.length; i++) {
+        let { topLeft, bottomRight } = facePositions[i];
+        // Calculate transformation scale between canvas and img
+        const scale = CANVAS.width / img.width;
+        // Apply scale
+        topLeft[0] *= scale;
+        topLeft[1] *= scale;
+        bottomRight[0] *= scale;
+        bottomRight[1] *= scale;
+        // Calculate rectangle dimensions
+        const rectSize = [bottomRight[0] - topLeft[0], bottomRight[1] - topLeft[1]];
         // Render a rectangle for each detected face.
-        ctx.strokeRect(start[0], start[1], size[0], size[1]);
-        // Print mood
-        ctx.fillText(result.emotions[i], start[0], start[1] - 5);
-        const faceCanvas = document.createElement('CANVAS');
-        const faceCtx = faceCanvas.getContext('2d');
-        faceCanvas.width = 48;
-        faceCanvas.height = 48;
-        faceCanvas.classList.add('face');
-        let imgData = faceCtx.createImageData(faceCanvas.width, faceCanvas.height);
-        for (let j = 0; j < result.faceImages[i].length; j++) {
-            imgData.data[j] = result.faceImages[i][j];
-        }
-        faceCtx.putImageData(imgData, 0, 0);
-        facesSection.appendChild(faceCanvas);
+        CTX.strokeRect(topLeft[0], topLeft[1], rectSize[0], rectSize[1]);
+        // Print detected emotion on top of rectangle.
+        CTX.fillText(emotions[i], topLeft[0], topLeft[1] - textOffestBottom);
     }
 };
 
-const uploadImage = () => {
-    const img = imgUploadElement.files[0];
+
+/**
+ * Creates a wrapper div and appends it to the DOM.
+ * Inserts a canvas displaying a face and a paragraph displaying the predicted
+ * emotion into the wrapper.
+ * 
+ * @param {Uint8ClampedArray} imgData 
+ * @param {String} emotion 
+ */
+const displayFaceImageWithAnnotations = (imgData, emotion) => {
+    // Create wrapper to deploy content into
+    const wrapper = document.createElement('DIV');
+    wrapper.classList.add('face-image');
+    // Create canvas and context to plot image into
+    const canvas = document.createElement('CANVAS');
+    canvas.width = 48;
+    canvas.height = 48;
+    const ctx = canvas.getContext('2d');
+    // Create new Image Object containing the imgData
+    let img = ctx.createImageData(canvas.width, canvas.height);
+    for (let i = 0; i < imgData.length && i < img.data.length; i++) {
+        img.data[i] = imgData[i];
+    }
+    // Plot img to canvas
+    ctx.putImageData(img, 0, 0);
+    // Add canvas to wrapper
+    wrapper.appendChild(canvas);
+    // Create label
+    const label = document.createElement('P');
+    label.innerHTML = emotion;
+    // Add label to canvas
+    wrapper.appendChild(label);
+    // Append wrapper element to DOM
+    FACES_SECTION.appendChild(wrapper);
+};
+
+
+/**
+ * Controlls the image processing, from plots to classification back
+ * to plots again.
+ * 
+ * @param {Image} img 
+ */
+const processImg = async (img) => {
+    // Plot the image onto the canvas
+    plotImg(img)
+    // Classify the given img
+    const { facePositions, faceImages, emotions } = await getEmotions(img);
+    // Plot classification results on top of image background
+    plotClassificationResults(img, facePositions, emotions);
+    // Display each detected face as own image with classification annotations
+    for (let i = 0; i < faceImages.length; i++) {
+        displayFaceImageWithAnnotations(faceImages[i], emotions[i]);
+    }
+};
+
+
+/**
+ * Create a new image from src and start processing it.
+ * 
+ * @param {String} src - image src
+ */
+const runPipeline = (src) => {
+    // Create a new image from src
+    const imgObj = new Image();
+    imgObj.src = src;
+    // Process image after loaded
+    imgObj.onload = () => processImg(imgObj);
+};
+
+
+/**
+ * Handle file Uploads
+ */
+IMG_UPLOAD_ELEMENT.onchange = () => {
+    const img = IMG_UPLOAD_ELEMENT.files[0];
     // Create a reader and read the uploaded image
     const reader = new FileReader();
     reader.onload = (e) => {
-        // Display the uploaded image
-        const imgObj = new Image();
-        imgObj.src = e.target.result;
-        imgObj.onload = () => {
-            plot(imgObj);
-            const result = getEmotions(imgObj);
-        }
+        // Run the pipeline with the uploaded image
+        runPipeline(e.target.result);
     };
     reader.readAsDataURL(img);
 };
 
-const init = () => {
-    //Create a new Image object.
-    const imgObj = new Image();
-    imgObj.src = defaultImgUrl;
-    imgObj.onload = () => plot(imgObj);
-};
 
-imgUploadElement.onchange = () => uploadImage();
-
-init();
+/**
+ * Initially run the pipeline with a default img
+ */
+runPipeline(defaultImgUrl);

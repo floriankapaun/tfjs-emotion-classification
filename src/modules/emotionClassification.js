@@ -5,7 +5,7 @@ import { loadLayersModel } from '@tensorflow/tfjs-layers';
 import '@tensorflow/tfjs-backend-cpu';
 // Blazeface model is used for face detection
 import * as blazeface from '@tensorflow-models/blazeface';
-
+// Emotion classification model
 import emotionClassificationModelUrl from '../assets/model/model.json';
 // Imports for webpack to compile the shards to dist
 import shard1 from '../assets/model/group1-shard1of1';
